@@ -1,0 +1,45 @@
+name: AI Code Reviewer (NestJS & Prisma)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  review:
+    if: ${{ github.event.sender.type != 'Bot' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: PR Agent Reviewer
+        uses: qodo-ai/pr-agent@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        
+          config.model: "gemini/gemini-2.5-flash"
+          config.fallback_models: '["gemini/gemini-2.5-flash"]'
+
+          GOOGLE_AI_STUDIO.GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
+          github_action_config.auto_review: "true"
+          github_action_config.auto_describe: "false"
+          github_action_config.auto_improve: "false"
+          github_action_config.pr_actions: '["opened", "reopened", "ready_for_review", "synchronize"]'
+
+          # Instruções específicas para o contexto do MecaHub
+          pr_reviewer.extra_instructions: |
+            Você é um Engenheiro de Software Backend Sênior especialista em NestJS, TypeScript e Prisma ORM.
+            Analise as alterações do Pull Request e forneça feedbacks construtivos focando em:
+            1. Boas práticas do NestJS (Injeção de dependência, uso correto de Services, Modules, Controllers e Exception Filters).
+            2. Validação de dados (Uso correto de DTOs com class-validator/class-transformer).
+            3. Queries do Prisma (Gargalos de performance, queries assíncronas mal estruturadas ou falta de tratamento de erros).
+            Responda de forma clara, direta e em português do Brasil.
