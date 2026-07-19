@@ -1,0 +1,151 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+  output   = "../generated/prisma"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  id Int @id @default(autoincrement())
+  name String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+}
+
+model User {
+  id Int @id @default(autoincrement())
+  name String
+  email String @unique
+  password String
+
+  role     Role @relation(fields: [roleId], references: [id])
+  roleId   Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  budgets Budget[]
+}
+
+model Client {
+  id Int @id @default(autoincrement())
+  name String 
+  cpf String @unique
+  phone String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vehicles Vehicle[]
+  budgets Budget[]
+}
+
+model Vehicle {
+  id Int @id @default(autoincrement())
+  model String
+  automaker String
+  year Int
+  engine String
+  plate String @unique
+
+  client     Client @relation(fields: [clientId], references: [id])
+  clientId Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  budgets Budget[]
+}
+
+model Product {
+  id Int @id @default(autoincrement())
+  name String
+  mark String
+  price Decimal @db.Decimal(10, 2)
+  description String
+  code String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  stocks Stock[]
+  budgetProducts BudgetProduct[]
+}
+
+model Stock {
+  id Int @id @default(autoincrement())
+
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+
+  quantity  Int
+  type      StockType 
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum StockType {
+  INCOME
+  EXPENSE
+}
+
+enum OsStatus {
+  WAITING_DIAGNOSIS
+  WAITING_BUDGET
+  WAITING_APPROVAL
+  IN_PROGRESS
+  WAITING_PAYMENT
+  FINISHED
+  CANCELLED
+}
+
+model Budget {
+  id          Int      @id @default(autoincrement())
+  number      String   @unique
+  totalPrice  Decimal
+  observation String?
+  status      OsStatus @default(WAITING_DIAGNOSIS)
+
+  client    Client  @relation(fields: [clientId], references: [id])
+  clientId  Int
+
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id])
+  vehicleId Int
+
+  createdBy   User @relation(fields: [createdById], references: [id])
+  createdById Int
+
+  products BudgetProduct[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model BudgetProduct {
+  id Int @id @default(autoincrement())
+
+  budget    Budget  @relation(fields: [budgetId], references: [id])
+  budgetId  Int
+
+  product   Product @relation(fields: [productId], references: [id])
+  productId Int
+
+  quantity  Int
+  price     Decimal
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
